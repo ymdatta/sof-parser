@@ -1,3 +1,4 @@
+* README
 - Problems faced:
 
   - One of the problem i faced was understanding what all IPC_TYPES and
@@ -28,7 +29,8 @@
                         there is an invalid input in the data file.
 			(Like having only 2 of 3 (i.e 2 of IPC_CMD, IPC_TYPE, IPC_SIZE))
 
-- I have checked with valgrind 
+- I have checked for memory leaks with valgrind command:
+
   `valgrind --leak-check=full --show-leak-kings=all ./parser datafile.txt'
 
   All the allocated blocks were freed and there were no memory leaks.
