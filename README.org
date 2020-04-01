@@ -1,0 +1,34 @@
+- Problems faced:
+
+  - One of the problem i faced was understanding what all IPC_TYPES and
+    IPC_CMDs are present.
+
+    For IPC_CMDS i grepped the sof includes in the kernel using _CMD_ as
+    the search item and i found that there were four results. I used those
+    four as possible values for IPC_CMD. (these were present in include/sound/sof/control.h)
+
+    Same was the case with IPC_TYPES, i wasn't sure what all types to
+    consider. I took /component runtime config/ types.
+
+    But, i feel this shouldn't pose a problem as we can always extend the
+    character array with appropriate types.
+
+    This was the part i was unsure of.
+
+- Instructions to run:
+
+  ./parser datafile.txt
+
+  - I have included 4 data files which i used while debugging my program.
+    
+    - data_0entries.txt: contains no entries
+    - data_1invalid.txt: contains 1 invalid data line, it should be detected while filtering.
+    - data_4invalid.txt: contains 4 invalid data lines, they should be detected while filtering.
+    - data_invalid.txt: contains an invalid input, the program exits and tells that
+                        there is an invalid input in the data file.
+			(Like having only 2 of 3 (i.e 2 of IPC_CMD, IPC_TYPE, IPC_SIZE))
+
+- I have checked with valgrind 
+  `valgrind --leak-check=full --show-leak-kings=all ./parser datafile.txt'
+
+  All the allocated blocks were freed and there were no memory leaks.
