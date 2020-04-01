@@ -248,9 +248,10 @@ int main(int argc, char**argv) {
 		}
 	}
 	// Printing all the messages read from the file
+	printf("Printing the messages read from the file:\n");
 	print_msg_list(msg_list);
 
-	printf("Simulating Messages\n");
+	printf("\nSimulating Messages:\n");
 	simulate_msgs_send (msg_list);
 
 	//Freeing the linkedlist

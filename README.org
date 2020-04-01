@@ -34,3 +34,7 @@
   `valgrind --leak-check=full --show-leak-kings=all ./parser datafile.txt'
 
   All the allocated blocks were freed and there were no memory leaks.
+
+- Sample output:
+
+  [[./images/s_output.png]]
