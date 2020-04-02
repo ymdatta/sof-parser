@@ -15,7 +15,7 @@
 #define IPC_TIMEOUT 300
 
 /* If size is valid, macro is replaced with 1 else 0 */
-#define IS_VALID_SIZE(size) ((size > MAX_IPC_SIZE) ? (0) : (1))
+#define IS_VALID_SIZE(size) ((size > MAX_IPC_SIZE | size < 0) ? (0) : (1))
 
 char ipc_types[][INPUT_MAX_LEN] = {"SOF_IPC_COMP_SET_VALUE",
 				   "SOF_IPC_COMP_GET_VALUE",
@@ -222,6 +222,12 @@ int main(int argc, char**argv) {
 	}
 	while(1) {
 		struct ipc_msg *msg = malloc(sizeof(struct ipc_msg));
+
+		if(msg == NULL) {
+			perror("malloc");
+			return -ENOMEM;
+		}
+
 	        int fscan_ret = fscanf(fptr, "%s %s %d", msg->ipc_type, msg->ipc_cmd,
 				       &msg->ipc_size);
 
