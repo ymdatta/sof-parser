@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <limits.h>
 #include <math.h>
 #include <time.h>
 #include <stdio.h>
@@ -8,11 +9,17 @@
 /* Maximum length of IPC type or command name. */
 #define INPUT_MAX_LEN 512
 
+/* Maximum length of a line in the data file. */
+#define MAX_DATA_LINE_LEN 2048
+
 /* Value was taken randomly. */
 #define MAX_IPC_SIZE 256
 
 /* Timeout in microseconds. */
 #define IPC_TIMEOUT 300
+
+/* Macro for finding out length of array. */
+#define LEN(arr) ((sizeof(arr) / sizeof (arr)[0]))
 
 /* If size is valid, macro is replaced with 1 else 0 */
 #define IS_VALID_SIZE(size) ((size > MAX_IPC_SIZE | size < 0) ? (0) : (1))
@@ -21,12 +28,12 @@ char ipc_types[][INPUT_MAX_LEN] = {"SOF_IPC_COMP_SET_VALUE",
 				   "SOF_IPC_COMP_GET_VALUE",
 				   "SOF_IPC_COMP_GET_DATA",
 				   "SOF_IPC_COMP_SET_DATA",
-				   "SOF_IPC_COMP_NOTIFICATION", "NULL"};
+				   "SOF_IPC_COMP_NOTIFICATION"};
 
 char ipc_cmds[][INPUT_MAX_LEN] = {"SOF_CTRL_CMD_VOLUME",
 				  "SOF_CTRL_CMD_ENUM",
 				  "SOF_CTRL_CMD_SWITCH",
-				  "SOF_CTRL_CMD_BINARY", "NULL"};
+				  "SOF_CTRL_CMD_BINARY"};
 /* Structure of the IPC message. */
 /*    ipc_type: character array which stores name of ipc_type */
 /*    ipc_cmd: character array which stores name of ipc_cmd */
@@ -110,27 +117,19 @@ int send_msg_to_dsp(struct ipc_msg *msg) {
 /* is a valid one. Returns 1 if valid else 0 */
 int is_valid_ipc_cmd(char *ipc_cmd) {
 
-	char *last_str = "NULL";
-	for(int i = 0; ; ++i) {
-		if(!strcmp(ipc_cmds[i], last_str))
-			break;
+	for(size_t i = 0;i < LEN(ipc_types) ; ++i)
 		if(!strcmp(ipc_cmds[i], ipc_cmd))
 			return 1;
-	}
 	return 0;
 }
 
 /* The function checks if the IPC_TYPE given to it as argument */
 /* is a valid one. Returns 1 if valid else 0 */
 int is_valid_ipc_type(char *ipc_type) {
-	char *last_str = "NULL";
 
-	for(int i = 0; ; ++i) {
-		if(!strcmp(ipc_types[i], last_str))
-			break;
+	for(size_t i = 0; i < LEN(ipc_cmds) ; ++i)
 		if(!strcmp(ipc_types[i], ipc_type))
 			return 1;
-	}
 	return 0;
 }
 
@@ -183,7 +182,7 @@ int simulate_msgs_send(struct ipc_msg_list *msg_list) {
 		current = current->next;
 	}
 
-	printf("Report:\n");
+	printf("\nReport:\n");
 	printf("Valid Messages: %d Invalid Messages: %d\n", valid_msgs, invalid_msgs);
 	if (valid_msgs)
 		printf("Max payload: %d Min payload: %d\n", max_payload, min_payload);
@@ -214,6 +213,7 @@ int main(int argc, char**argv) {
 
 	// Head of the linkedlist which stores all the IPC Messages
 	struct ipc_msg_list *msg_list = NULL;
+	char delim[] = " ";
 	FILE* fptr = fopen(argv[1], "r");
 
 	if(fptr == NULL) {
@@ -228,20 +228,71 @@ int main(int argc, char**argv) {
 			return -ENOMEM;
 		}
 
-	        int fscan_ret = fscanf(fptr, "%s %s %d", msg->ipc_type, msg->ipc_cmd,
-				       &msg->ipc_size);
+		char input[MAX_DATA_LINE_LEN];
+		memset(input, 0, MAX_DATA_LINE_LEN);
 
-		if (fscan_ret == EOF) {
-			// This branch is taken when EOF is reached.
+		if (fgets(input, MAX_DATA_LINE_LEN+1, fptr) == NULL) {
+			// End of file is reached
+			if (feof(fptr)) {
+				free(msg);
+				break;
+			} // Error while reading input
+			else {
+				perror("fgets");
+				free(msg);
+				free_msg_list(&msg_list);
+				fclose(fptr);
+				return -1;
+			}
+		}
+
+		// Split the input into tokens
+
+		// First token is IPC_TYPE
+		char *token = strtok(input, delim);
+		if (token != NULL) {
+			strcpy(msg->ipc_type, token);
+
+			// Second token is IPC_CMD
+			token = strtok(NULL, delim);
+			if (token != NULL) {
+				strcpy(msg->ipc_cmd, token);
+
+				// Third token is IPC_SIZE
+				token = strtok(NULL, delim);
+				if (token != NULL) {
+					char *end = NULL;
+					long ipc_size = strtol(token, &end, 10);
+
+					// Invalid argument case: Ex:20abc
+					if (*end != '\n') {
+						free(msg);
+						continue;
+					}
+
+					// Check if the input exceeds INT limits
+					if ((ipc_size > INT_MAX) |
+					    (ipc_size < INT_MIN)) {
+						free(msg);
+						continue;
+					}
+
+					msg->ipc_size = (int) ipc_size;
+				} else {
+					/* If this branch is taken, it means */
+					/* only two commands were given. */
+					free(msg);
+					continue;
+				}
+			} else {
+				/* If this branch is taken, it means */
+				/* only one command was given. */
+				free(msg);
+				continue;
+			}
+		} else {
 			free(msg);
-			break;
-		} else if (fscan_ret < 3) {
-			// If this branch is taken, it means the input data was invalid.
-			printf("Error: Invalid Message Input\n");
-			free(msg);
-			free_msg_list(&msg_list);
-			fclose(fptr);
-			return -1;
+			continue;
 		}
 
 		// Pushing the IPC Message read from the file into the linkedlist.
@@ -249,7 +300,7 @@ int main(int argc, char**argv) {
 		if (ret < 0) {
 			free(msg);
 			free_msg_list(&msg_list);
-			fclose(fptr);			
+			fclose(fptr);
 			return ret;
 		}
 	}
@@ -258,7 +309,7 @@ int main(int argc, char**argv) {
 	print_msg_list(msg_list);
 
 	printf("\nSimulating Messages:\n");
-	simulate_msgs_send (msg_list);
+	simulate_msgs_send(msg_list);
 
 	//Freeing the linkedlist
 	free_msg_list(&msg_list);
