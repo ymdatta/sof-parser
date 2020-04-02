@@ -25,9 +25,8 @@
     - data_0entries.txt: contains no entries
     - data_1invalid.txt: contains 1 invalid data line, it should be detected while filtering.
     - data_4invalid.txt: contains 4 invalid data lines, they should be detected while filtering.
-    - data_invalid.txt: contains an invalid input, the program exits and tells that
-                        there is an invalid input in the data file.
-			(Like having only 2 of 3 (i.e 2 of IPC_CMD, IPC_TYPE, IPC_SIZE))
+    - data_invalid.txt: contains an invalid input, (Like having only 2 of 3 (i.e 2 of IPC_CMD, IPC_TYPE, IPC_SIZE)).
+                        This type of inputs are ignored and inputs after this one are parsed.
 
 - I have checked for memory leaks with valgrind command:
 
