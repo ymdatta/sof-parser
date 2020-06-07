@@ -1,0 +1,13 @@
+#
+# AFL dictionary for SOF parser
+
+keyword_type0="SOF_IPC_COMP_SET_VALUE"
+keyword_type1="SOF_IPC_COMP_GET_VALUE"
+keyword_type2="SOF_IPC_COMP_GET_DATA"
+keyword_type3="SOF_IPC_COMP_SET_DATA"
+keyword_type4="SOF_IPC_COMP_NOTIFICATION"
+
+keyword_cmd0="SOF_CTRL_CMD_VOLUME"
+keyword_cmd1="SOF_CTRL_CMD_ENUM"
+keyword_cmd2="SOF_CTRL_CMD_SWITCH"
+keyword_cmd3="SOF_CTRL_CMD_BINARY"
