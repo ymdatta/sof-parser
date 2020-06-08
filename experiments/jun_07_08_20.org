@@ -1,0 +1,75 @@
+Some Observations:
+
+1. The fuzzing process takes time.
+
+   The docs of AFL says that "most fuzzing jobs should be expected to run for days or
+   weeks; in fact, for a moderately complex project, the first pass will probably take
+   a day or so. Every now and then, some jobs will be allowed to run for months"
+
+2. I tried to fuzz the sof-parser i have written as part of my GSoC assignment.
+
+   If you remember, while simulating the working of dsp. We used to sleep for some time
+   to simulate that DSP was working on it and then print the message DSP received. The
+   IPC_TIMEOUT was 300 microseconds.
+
+   When i ran fuzzer with a valid input (only valid inputs trigger this DSP simulate),
+   i got an AFL-warning like this:
+
+   #+BEGIN_SRC bash
+   [-] The program took more than 1000 ms to process one of the initial test cases.
+       This is bad news; raising the limit with the -t option is possible, but
+       will probably make the fuzzing process extremely slow.
+
+       If this test case is just a fluke, the other option is to just avoid it
+       altogether, and find one that is less of a CPU hog.
+   #+END_SRC
+
+   I then decided to do two experiments, run AFL with only invalid inputs (they won't
+   trigger the above warning) and then run AFL with valid inputs by removing the
+   sleep code in parser.c
+
+   - Experiment 1:
+
+     [[./../images/exp1.png]]
+
+     I ran AFL for an hour on this. You can see the image above, it's the status of
+     the AFL when it ran.
+
+     You can see that there were 6 unique crashes and 10 unique hangs.
+
+     These can be found in the [[./../findings/]] directory.
+
+     1. Each and every hang was due to the fact that when AFL generated a valid input,
+	as the parser sleeps for that input, AFL takes that as hang.
+
+     2. Each and every crash it found was related to strcpy. It was buffer overflows.
+	Our buffer length was say 100, but the input it received was >100. So, there
+	was buffer overflow. AFL created these unique input cases where this happens.
+	
+	You can see all the testcases it generated in the [[./../findings/]] directory.
+	The directory contains 'crashes' as well as 'hangs' subdirectories, which contains
+	the test cases which caused those.
+
+
+   - Experiment 2:
+
+     [[./../images/exp2.png]]
+
+     In this experiment, i removed the sleep code from parser and ran AFL for two hours.
+     You can see the image above, it's the status of the AFL when it ran.
+
+     You can see that there were 6 unique crashes and 0 hangs.
+
+     These can be found in the [[./../findings_exp2/crashes/]] directory.
+
+     1. Same as in experiment 1, each and every crash was related to strcpy. All were
+	due to the buffer overflows.
+
+	You can see the testcases which caused crash in the [[./../findings_exp2/crashes]]
+	directory.
+
+     2. As you can see from the status screen, these crashes were detected very early
+	(in starting 9 mins).
+
+	We should expect to leave fuzzer running for a lot of time to find more and
+	more crash paths.
