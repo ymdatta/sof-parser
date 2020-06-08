@@ -1,4 +1,4 @@
-Some Observations:
+* Some Observations:
 
 1. The fuzzing process takes time.
 
@@ -28,48 +28,49 @@ Some Observations:
    trigger the above warning) and then run AFL with valid inputs by removing the
    sleep code in parser.c
 
-   - Experiment 1:
+* Experiment 1:
 
      [[./../images/exp1.png]]
 
-     I ran AFL for an hour on this. You can see the image above, it's the status of
-     the AFL when it ran.
+1. I ran AFL for an hour on this. You can see the image above, it's the status of
+   the AFL when it ran.
 
-     You can see that there were 6 unique crashes and 10 unique hangs.
+   You can see that there were 6 unique crashes and 10 unique hangs.
 
-     These can be found in the [[./../findings/]] directory.
+   These can be found in the [[./../findings/]] directory.
 
-     1. Each and every hang was due to the fact that when AFL generated a valid input,
-	as the parser sleeps for that input, AFL takes that as hang.
+2. Each and every hang was due to the fact that when AFL generated a valid input,
+   as the parser sleeps for that input, AFL takes that as hang.
 
-     2. Each and every crash it found was related to strcpy. It was buffer overflows.
-	Our buffer length was say 100, but the input it received was >100. So, there
-	was buffer overflow. AFL created these unique input cases where this happens.
-	
-	You can see all the testcases it generated in the [[./../findings/]] directory.
-	The directory contains 'crashes' as well as 'hangs' subdirectories, which contains
-	the test cases which caused those.
+3. Each and every crash it found was related to strcpy. It was buffer overflows.
+
+   Our buffer length was say 100, but the input it received was >100. So, there
+   was buffer overflow. AFL created these unique input cases where this happens.
+
+   You can see all the testcases it generated in the [[./../findings/]] directory.
+   The directory contains 'crashes' as well as 'hangs' subdirectories, which contains
+   the test cases which caused those.
 
 
-   - Experiment 2:
+* Experiment 2:
 
      [[./../images/exp2.png]]
 
-     In this experiment, i removed the sleep code from parser and ran AFL for two hours.
-     You can see the image above, it's the status of the AFL when it ran.
+1. In this experiment, i removed the sleep code from parser and ran AFL for two
+   hours. You can see the image above, it's the status of the AFL when it ran.
 
-     You can see that there were 6 unique crashes and 0 hangs.
+   You can see that there were 6 unique crashes and 0 hangs.
 
-     These can be found in the [[./../findings_exp2/crashes/]] directory.
+   These can be found in the [[./../findings_exp2/crashes/]] directory.
 
-     1. Same as in experiment 1, each and every crash was related to strcpy. All were
-	due to the buffer overflows.
+2. Same as in experiment 1, each and every crash was related to strcpy. All were
+   due to the buffer overflows.
 
-	You can see the testcases which caused crash in the [[./../findings_exp2/crashes]]
-	directory.
+   You can see the testcases which caused crash in the [[./../findings_exp2/crashes]]
+   directory.
 
-     2. As you can see from the status screen, these crashes were detected very early
-	(in starting 9 mins).
+3. As you can see from the status screen, these crashes were detected very early
+   (in starting 9 mins).
 
-	We should expect to leave fuzzer running for a lot of time to find more and
-	more crash paths.
+   We should expect to leave fuzzer running for a lot of time to find more and
+   more crash paths.
